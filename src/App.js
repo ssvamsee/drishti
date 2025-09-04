@@ -12,7 +12,7 @@ import { queryClient } from './services/api';
 
 // Layouts
 import AuthLayout from './layouts/AuthLayout';
-import DashboardLayout from './layouts/DashboardLayout';
+import MainLayout from './layouts/MainLayout';
 
 // Pages
 import LoginPage from './pages/auth/LoginPage';
@@ -72,191 +72,146 @@ function App() {
               }
             />
 
-            {/* Protected Routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Dashboard />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/students"
-              element={
-                <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher']}>
-                  <DashboardLayout>
+            {/* Protected Dashboard Routes - Nested under ProtectedDashboardRoute */}
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route 
+                path="students" 
+                element={
+                  <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher']}>
                     <Students />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/attendance"
-              element={
-                <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher', 'student', 'parent']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="attendance" 
+                element={
+                  <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher', 'student', 'parent']}>
                     <Attendance />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/marks"
-              element={
-                <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher', 'student', 'parent']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="marks" 
+                element={
+                  <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher', 'student', 'parent']}>
                     <Marks />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/marks/import"
-              element={
-                <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="marks/import" 
+                element={
+                  <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher']}>
                     <MarksImport />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/fees"
-              element={
-                <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'finance_admin', 'student', 'parent']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="fees" 
+                element={
+                  <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'finance_admin', 'student', 'parent']}>
                     <Fees />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'finance_admin']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="reports" 
+                element={
+                  <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'finance_admin']}>
                     <Reports />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-                            <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute roles={['superadmin', 'organization_head', 'branch_principal']}>
-                      <DashboardLayout>
-                        <Settings />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute roles={['student', 'parent']}>
-                      <DashboardLayout>
-                        <StudentProfile />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                
-                <Route
-                  path="/assignments"
-                  element={
-                    <ProtectedRoute roles={['student', 'teacher']}>
-                      <DashboardLayout>
-                        <Assignments />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="settings" 
+                element={
+                  <ProtectedRoute roles={['superadmin', 'organization_head', 'branch_principal']}>
+                    <Settings />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="profile" 
+                element={
+                  <ProtectedRoute roles={['student', 'parent']}>
+                    <StudentProfile />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="assignments" 
+                element={
+                  <ProtectedRoute roles={['student', 'teacher']}>
+                    <Assignments />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Superadmin Routes */}
-            <Route
-              path="/organizations"
-              element={
-                <ProtectedRoute roles={['superadmin']}>
-                  <DashboardLayout>
+              {/* Superadmin Routes */}
+              <Route 
+                path="organizations" 
+                element={
+                  <ProtectedRoute roles={['superadmin']}>
                     <Organizations />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute roles={['superadmin']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="users" 
+                element={
+                  <ProtectedRoute roles={['superadmin']}>
                     <Users />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/billing"
-              element={
-                <ProtectedRoute roles={['superadmin']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="billing" 
+                element={
+                  <ProtectedRoute roles={['superadmin']}>
                     <Billing />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/monitoring"
-              element={
-                <ProtectedRoute roles={['superadmin']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="monitoring" 
+                element={
+                  <ProtectedRoute roles={['superadmin']}>
                     <Monitoring />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute roles={['superadmin']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="analytics" 
+                element={
+                  <ProtectedRoute roles={['superadmin']}>
                     <Analytics />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/support"
-              element={
-                <ProtectedRoute roles={['superadmin']}>
-                  <DashboardLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="support" 
+                element={
+                  <ProtectedRoute roles={['superadmin']}>
                     <Support />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Default Redirect */}
-            <Route
-              path="/"
-              element={
-                <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
-              }
-            />
+                  </ProtectedRoute>
+                } 
+              />
+            </Route>
 
             {/* Catch all - redirect to dashboard or login */}
             <Route

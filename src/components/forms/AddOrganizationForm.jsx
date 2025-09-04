@@ -27,6 +27,8 @@ const organizationSchema = yup.object({
 const AddOrganizationForm = ({ isOpen, onClose, onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showFeaturesModal, setShowFeaturesModal] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
 
   const {
     register,
@@ -65,6 +67,8 @@ const AddOrganizationForm = ({ isOpen, onClose, onSubmit }) => {
         phone: data.phone,
         address: data.address,
         website: data.website,
+        logo: logoPreview, // Include the logo preview URL
+        logoFile: logoFile, // Include the actual file for potential upload
         status: 'active',
         subscription: data.subscription,
         branches: 0,
@@ -94,6 +98,8 @@ const AddOrganizationForm = ({ isOpen, onClose, onSubmit }) => {
 
       toast.success('Organization created successfully!');
       reset();
+      setLogoFile(null);
+      setLogoPreview(null);
       onClose();
     } catch (error) {
       console.error('Error creating organization:', error);
@@ -103,8 +109,48 @@ const AddOrganizationForm = ({ isOpen, onClose, onSubmit }) => {
     }
   };
 
+  const handleLogoChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Please upload a valid image file (JPG, PNG, GIF, or SVG)');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+
+      setLogoFile(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    // Clear the file input
+    const fileInput = document.getElementById('logo');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
   const handleCancel = () => {
     reset();
+    setLogoFile(null);
+    setLogoPreview(null);
     onClose();
   };
 
@@ -250,6 +296,65 @@ const AddOrganizationForm = ({ isOpen, onClose, onSubmit }) => {
                 placeholder="Enter organization name"
                 error={errors.name?.message}
               />
+            </div>
+
+            <div>
+              <label htmlFor="logo" className="block text-sm font-medium text-foreground mb-1">
+                Organization Logo
+              </label>
+              <div className="space-y-3">
+                {/* File Input */}
+                <div className="flex items-center space-x-3">
+                  <input
+                    id="logo"
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml"
+                    onChange={handleLogoChange}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('logo').click()}
+                    className="flex items-center space-x-2"
+                  >
+                    <Icons.Upload className="h-4 w-4" />
+                    <span>Choose File</span>
+                  </Button>
+                  {logoFile && (
+                    <span className="text-sm text-muted-foreground">
+                      {logoFile.name}
+                    </span>
+                  )}
+                </div>
+
+                {/* Logo Preview */}
+                {logoPreview && (
+                  <div className="relative inline-block">
+                    <div className="w-20 h-20 border-2 border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/90 transition-colors"
+                      title="Remove logo"
+                    >
+                      <Icons.X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+
+                {/* File Requirements */}
+                <p className="text-xs text-muted-foreground">
+                  Supported formats: JPG, PNG, GIF, SVG. Max size: 5MB
+                </p>
+              </div>
             </div>
 
             <div>

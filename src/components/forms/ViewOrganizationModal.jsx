@@ -31,9 +31,24 @@ const ViewOrganizationModal = ({ isOpen, onClose, organization }) => {
       <div className="space-y-6">
         {/* Organization Header */}
         <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">{organization.name}</h2>
-            <p className="text-sm text-muted-foreground mt-1">ID: {organization.id}</p>
+          <div className="flex items-center space-x-4">
+            {/* Organization Logo */}
+            <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+              {organization.logo ? (
+                <img
+                  src={organization.logo}
+                  alt={`${organization.name} logo`}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <Icons.Building2 className="h-8 w-8 text-muted-foreground" />
+              )}
+            </div>
+            {/* Organization Info */}
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">{organization.name}</h2>
+              <p className="text-sm text-muted-foreground mt-1">ID: {organization.id}</p>
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             {getStatusBadge(organization.status)}

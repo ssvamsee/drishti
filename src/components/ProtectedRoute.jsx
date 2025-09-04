@@ -14,7 +14,6 @@ const ProtectedRoute = ({ children, roles = [] }) => {
 
   // Check if user has required role (if roles are specified)
   if (roles.length > 0 && !roles.includes(user.role)) {
-    toast.error(TOAST_MESSAGES.ERROR.UNAUTHORIZED);
     return <Navigate to="/dashboard" replace />;
   }
 

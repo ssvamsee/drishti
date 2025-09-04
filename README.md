@@ -125,7 +125,7 @@ src/
 │   └── ThemeToggle.jsx         # Theme switcher
 ├── layouts/
 │   ├── AuthLayout.jsx          # Authentication layout
-│   └── DashboardLayout.jsx     # Main app layout
+│   └── MainLayout.jsx          # Main app layout
 ├── pages/
 │   ├── auth/
 │   │   └── LoginPage.jsx       # Login page

@@ -17,6 +17,7 @@ import {
 } from '../utils/allRolesMockData';
 import TeacherDashboard from '../components/RoleDashboards/TeacherDashboard';
 import SuperadminDashboard from '../components/RoleDashboards/SuperadminDashboard';
+import OrganizationHeadDashboard from '../components/RoleDashboards/OrganizationHeadDashboard';
 
 const Dashboard = () => {
   const { user } = useAuthStore();
@@ -226,8 +227,7 @@ const Dashboard = () => {
           // Will create this next
           return <div>Parent Dashboard Coming Soon</div>;
         case 'organization_head':
-          // Will create this next
-          return <div>Organization Head Dashboard Coming Soon</div>;
+          return <OrganizationHeadDashboard data={roleData} />;
         case 'superadmin':
           return <SuperadminDashboard data={roleData} />;
       }

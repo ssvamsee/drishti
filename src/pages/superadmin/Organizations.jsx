@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import * as Icons from 'lucide-react';
 
 import DataTable from '../../components/shared/DataTable';
+import ExportDropdown from '../../components/shared/ExportDropdown';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -151,9 +152,24 @@ const Organizations = () => {
       label: 'Organization',
       sortable: true,
       render: (value, item) => (
-        <div>
-          <div className="font-medium">{value}</div>
-          <div className="text-sm text-muted-foreground">{item.email}</div>
+        <div className="flex items-center space-x-3">
+          {/* Organization Logo */}
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+            {item.logo ? (
+              <img
+                src={item.logo}
+                alt={`${value} logo`}
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <Icons.Building2 className="h-5 w-5 text-muted-foreground" />
+            )}
+          </div>
+          {/* Organization Info */}
+          <div>
+            <div className="font-medium">{value}</div>
+            <div className="text-sm text-muted-foreground">{item.email}</div>
+          </div>
         </div>
       )
     },
@@ -235,26 +251,39 @@ const Organizations = () => {
 
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full space-y-4">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0"
+        className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between lg:items-center sm:space-y-0"
       >
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold text-foreground">Organizations</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mt-1">
             Manage organizations, subscriptions, and billing
           </p>
         </div>
         
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Icons.Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button size="sm" onClick={handleAddOrganization}>
+        <div className="flex items-center space-x-2 flex-shrink-0">
+          <ExportDropdown
+            data={organizations}
+            filename="organizations"
+            columns={columns}
+            variant="outline"
+            size="sm"
+            className="flex-1 sm:flex-none"
+            onExportStart={(format) => {
+              toast.info(`Preparing ${format.label} export...`);
+            }}
+            onExportComplete={(format, filename) => {
+              console.log(`Export completed: ${filename}`);
+            }}
+            onExportError={(error, format) => {
+              console.error(`Export failed for ${format.label}:`, error);
+            }}
+          />
+          <Button size="sm" onClick={handleAddOrganization} className="flex-1 sm:flex-none">
             <Icons.Plus className="h-4 w-4 mr-2" />
             Add Organization
           </Button>
@@ -264,15 +293,17 @@ const Organizations = () => {
 
 
       {/* Filter Buttons and Search */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+        {/* Filter Buttons */}
+        <div className="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
           <Button
             variant={!filters.status ? 'default' : 'outline'}
             size="sm"
             onClick={() => setFilters({})}
+            className="text-xs sm:text-sm"
           >
-            All Organizations
-            <span className="ml-2 bg-background/50 text-foreground px-1.5 py-0.5 rounded text-xs">
+            All
+            <span className="ml-1 sm:ml-2 bg-background/50 text-foreground px-1 sm:px-1.5 py-0.5 rounded text-xs">
               {organizations.length}
             </span>
           </Button>
@@ -280,9 +311,10 @@ const Organizations = () => {
             variant={filters.status === 'active' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setFilters({ status: 'active' })}
+            className="text-xs sm:text-sm"
           >
             Active
-            <span className="ml-2 bg-background/50 text-foreground px-1.5 py-0.5 rounded text-xs">
+            <span className="ml-1 sm:ml-2 bg-background/50 text-foreground px-1 sm:px-1.5 py-0.5 rounded text-xs">
               {organizations.filter(org => org.status === 'active').length}
             </span>
           </Button>
@@ -290,9 +322,10 @@ const Organizations = () => {
             variant={filters.status === 'trial' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setFilters({ status: 'trial' })}
+            className="text-xs sm:text-sm"
           >
             Trial
-            <span className="ml-2 bg-background/50 text-foreground px-1.5 py-0.5 rounded text-xs">
+            <span className="ml-1 sm:ml-2 bg-background/50 text-foreground px-1 sm:px-1.5 py-0.5 rounded text-xs">
               {organizations.filter(org => org.status === 'trial').length}
             </span>
           </Button>
@@ -300,38 +333,43 @@ const Organizations = () => {
             variant={filters.status === 'suspended' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setFilters({ status: 'suspended' })}
+            className="text-xs sm:text-sm"
           >
             Suspended
-            <span className="ml-2 bg-background/50 text-foreground px-1.5 py-0.5 rounded text-xs">
+            <span className="ml-1 sm:ml-2 bg-background/50 text-foreground px-1 sm:px-1.5 py-0.5 rounded text-xs">
               {organizations.filter(org => org.status === 'suspended').length}
             </span>
           </Button>
         </div>
         
         {/* Search Box */}
-        <div className="relative">
+        <div className="relative w-full lg:w-auto">
           <Icons.Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search organizations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-64"
+            className="pl-10 w-full lg:w-64"
           />
         </div>
       </div>
 
       {/* Organizations Table */}
-      <DataTable
-        data={organizations}
-        columns={columns}
-        actions={actions}
-        loading={loading}
-        paginated={true}
-        defaultItemsPerPage={5}
-        showPaginationInfo={true}
-        showItemsPerPageSelector={true}
-        searchTerm={searchTerm}
-      />
+      <div className="flex-1 min-h-0">
+        <DataTable
+          data={organizations}
+          columns={columns}
+          actions={actions}
+          loading={loading}
+          paginated={true}
+          defaultItemsPerPage={5}
+          showPaginationInfo={true}
+          showItemsPerPageSelector={true}
+          maxHeight="100%"
+          stickyHeader={true}
+          searchTerm={searchTerm}
+        />
+      </div>
 
       {/* Add Organization Modal */}
       <AddOrganizationForm

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Menu, 
@@ -18,7 +19,7 @@ import useAuthStore from '../store/authStore';
 import { APP_NAME, ROLE_NAMES } from '../utils/constants';
 import { toast } from 'sonner';
 
-const DashboardLayout = ({ children }) => {
+const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const { user, logout } = useAuthStore();
@@ -178,17 +179,16 @@ const DashboardLayout = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {children}
-              </motion.div>
-            </div>
+        <main className="flex-1 flex flex-col overflow-hidden focus:outline-none">
+          <div className="flex-1 flex flex-col px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 min-h-0">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col min-h-0"
+            >
+              <Outlet />
+            </motion.div>
           </div>
         </main>
       </div>
@@ -198,4 +198,4 @@ const DashboardLayout = ({ children }) => {
   );
 };
 
-export default DashboardLayout; 
+export default MainLayout; 

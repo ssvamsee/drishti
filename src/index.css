@@ -57,6 +57,9 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     /* Slightly reduce base font size for better consistency with sidebar */
     font-size: 14px;
+    /* Prevent any body scrolling */
+    overflow: hidden;
+    height: 100vh;
   }
 
   /* Scrollbar styling */
@@ -112,5 +115,39 @@
 
   .btn-link {
     @apply text-primary underline-offset-4 hover:underline h-10 px-4 py-2 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  /* Auto-hide scrollbar classes */
+  .scrollbar-hidden {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    width: 0px;
+    background: transparent; /* Chrome/Safari/Webkit */
+  }
+
+  .scrollbar-visible {
+    scrollbar-width: thin; /* Firefox */
+    -ms-overflow-style: auto; /* IE and Edge */
+    transition: all 0.2s ease;
+  }
+
+  .scrollbar-visible::-webkit-scrollbar {
+    @apply w-2;
+    transition: all 0.2s ease;
+  }
+
+  .scrollbar-visible::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  .scrollbar-visible::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-lg;
+  }
+
+  .scrollbar-visible::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
   }
 } 
