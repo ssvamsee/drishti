@@ -16,7 +16,9 @@ import {
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { Input } from '../../components/ui/Input';
 import BranchSelector from '../../components/shared/BranchSelector';
+import DataTable from '../../components/shared/DataTable';
 import ExportDropdown from '../../components/shared/ExportDropdown';
 import { cn } from '../../utils/cn';
 import { ALL_ROLES_MOCK_DATA } from '../../utils/allRolesMockData';
@@ -24,8 +26,11 @@ import { USER_ROLES } from '../../utils/constants';
 
 const AttendanceOrgHead = () => {
   const [selectedBranches, setSelectedBranches] = useState([]);
-  const [viewMode, setViewMode] = useState('overview'); // 'overview', 'trends', 'detailed'
-  const [timeRange, setTimeRange] = useState('today'); // 'today', 'week', 'month', 'quarter'
+  const [timeRange, setTimeRange] = useState('today'); // 'today', 'week', 'month', 'quarter', 'custom'
+  const [customDateRange, setCustomDateRange] = useState({
+    startDate: '',
+    endDate: ''
+  });
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -56,9 +61,46 @@ const AttendanceOrgHead = () => {
       ? data.branches.filter(b => selectedBranches.includes(b.id))
       : data.branches;
 
-    const attendanceByBranch = data.attendanceAnalytics.byBranch.filter(a => 
-      branches.some(b => b.id === a.branchId)
-    );
+    // Apply time range multipliers to simulate different time periods
+    const getTimeMultiplier = () => {
+      switch (timeRange) {
+        case 'today': return { present: 1.0, absent: 1.0, label: 'today' };
+        case 'week': return { present: 0.95, absent: 1.1, label: 'this week' };
+        case 'month': return { present: 0.88, absent: 1.25, label: 'this month' };
+        case 'quarter': return { present: 0.85, absent: 1.4, label: 'this quarter' };
+        case 'custom': {
+          // For custom range, calculate based on date range length
+          if (customDateRange.startDate && customDateRange.endDate) {
+            const start = new Date(customDateRange.startDate);
+            const end = new Date(customDateRange.endDate);
+            const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            if (daysDiff <= 7) return { present: 0.92, absent: 1.15, label: `${daysDiff} days` };
+            if (daysDiff <= 30) return { present: 0.87, absent: 1.3, label: `${daysDiff} days` };
+            return { present: 0.82, absent: 1.45, label: `${daysDiff} days` };
+          }
+          return { present: 1.0, absent: 1.0, label: 'custom range' };
+        }
+        default: return { present: 1.0, absent: 1.0, label: 'today' };
+      }
+    };
+
+    const multiplier = getTimeMultiplier();
+
+    const attendanceByBranch = data.attendanceAnalytics.byBranch
+      .filter(a => branches.some(b => b.id === a.branchId))
+      .map(branch => {
+        const adjustedPresent = Math.floor(branch.present * multiplier.present);
+        const adjustedAbsent = Math.floor(branch.absent * multiplier.absent);
+        const total = adjustedPresent + adjustedAbsent;
+        const rate = total > 0 ? (adjustedPresent / total) * 100 : 0;
+        
+        return {
+          ...branch,
+          present: adjustedPresent,
+          absent: adjustedAbsent,
+          rate: rate
+        };
+      });
 
     const totalPresent = attendanceByBranch.reduce((sum, a) => sum + a.present, 0);
     const totalAbsent = attendanceByBranch.reduce((sum, a) => sum + a.absent, 0);
@@ -73,10 +115,144 @@ const AttendanceOrgHead = () => {
       totalStudents,
       overallRate,
       trends: data.attendanceAnalytics.trends,
+      timeLabel: multiplier.label
     };
   };
 
+
   const filteredData = getFilteredAttendanceData();
+
+  // Define columns for the attendance table
+  const attendanceColumns = [
+    {
+      key: 'branchName',
+      label: 'Branch Name',
+      sortable: true,
+      render: (value, row) => (
+        <div className="flex items-center space-x-3">
+          <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+            <span className="text-xs font-medium text-primary">
+              {value.charAt(0)}
+            </span>
+          </div>
+          <div>
+            <div className="font-medium text-foreground">{value}</div>
+            <div className="text-xs text-muted-foreground">
+              {filteredData.branches.find(b => b.name === value)?.location || 'N/A'}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'present',
+      label: 'Present',
+      sortable: true,
+      render: (value) => (
+        <div className="flex items-center space-x-2">
+          <UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <span className="font-bold text-green-700 dark:text-green-300">{value.toLocaleString()}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'absent',
+      label: 'Absent',
+      sortable: true,
+      render: (value) => (
+        <div className="flex items-center space-x-2">
+          <UserX className="h-4 w-4 text-red-600 dark:text-red-400" />
+          <span className="font-bold text-red-700 dark:text-red-300">{value.toLocaleString()}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'total',
+      label: 'Total Students',
+      sortable: true,
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <span className="font-bold text-blue-700 dark:text-blue-300">{(row.present + row.absent).toLocaleString()}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'rate',
+      label: 'Attendance Rate',
+      sortable: true,
+      render: (value) => {
+        const getColorScheme = (rate) => {
+          if (rate >= 95) return { 
+            badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800'
+          };
+          if (rate >= 85) return { 
+            badgeClass: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800'
+          };
+          if (rate >= 75) return { 
+            badgeClass: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800'
+          };
+          return { 
+            badgeClass: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'
+          };
+        };
+        
+        const colorScheme = getColorScheme(value);
+        
+        return (
+          <Badge 
+            className={cn("text-sm font-bold px-3 py-1", colorScheme.badgeClass)}
+          >
+            {value.toFixed(1)}%
+          </Badge>
+        );
+      },
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      render: (value, row) => {
+        const getStatus = (rate) => {
+          if (rate >= 95) return { 
+            label: 'Excellent', 
+            className: 'bg-emerald-500 text-white border-emerald-600 shadow-md',
+            icon: '🏆',
+            // dotClass: 'bg-emerald-500'
+          };
+          if (rate >= 85) return { 
+            label: 'Good', 
+            className: 'bg-green-500 text-white border-green-600 shadow-md',
+            icon: '✅',
+            // dotClass: 'bg-green-500'
+          };
+          if (rate >= 75) return { 
+            label: 'Fair', 
+            className: 'bg-amber-500 text-white border-amber-600 shadow-md',
+            icon: '⚠️',
+            // dotClass: 'bg-amber-500'
+          };
+          return { 
+            label: 'Poor', 
+            className: 'bg-red-500 text-white border-red-600 shadow-md',
+            icon: '🚨',
+            // dotClass: 'bg-red-500'
+          };
+        };
+        
+        const status = getStatus(row.rate);
+        return (
+          <div className="flex items-center justify-start space-x-3">
+            {/* <div className={cn("w-3 h-3 rounded-full", status.dotClass)}></div> */}
+            <span className="text-lg">{status.icon}</span>
+            <Badge className={cn("font-bold px-3 py-1", status.className)}>
+              {status.label}
+            </Badge>
+          </div>
+        );
+      },
+    },
+  ];
 
   const StatCard = ({ title, value, icon: Icon, trend, trendValue, color = "blue" }) => (
     <Card className="p-6">
@@ -113,100 +289,16 @@ const AttendanceOrgHead = () => {
     </Card>
   );
 
-  const AttendanceChart = ({ data, title }) => (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <BarChart3 className="h-5 w-5 text-muted-foreground" />
-      </div>
-      <div className="space-y-3">
-        {data.map((item, index) => {
-          const rate = item.rate || ((item.present / (item.present + item.absent)) * 100);
-          const maxRate = Math.max(...data.map(d => d.rate || ((d.present / (d.present + d.absent)) * 100)));
-          const percentage = (rate / maxRate) * 100;
-          
-          return (
-            <div key={index} className="flex items-center space-x-3">
-              <div className="w-24 text-sm font-medium truncate">
-                {item.branchName || item.month}
-              </div>
-              <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                <div 
-                  className={cn(
-                    "rounded-full h-3 transition-all duration-500",
-                    rate >= 90 ? 'bg-green-500' : rate >= 75 ? 'bg-yellow-500' : 'bg-red-500'
-                  )}
-                  style={{ width: `${percentage}%` }}
-                />
-              </div>
-              <div className="w-16 text-sm text-right font-medium">
-                {rate.toFixed(1)}%
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
 
-  const BranchDetailCard = ({ branch }) => {
-    const attendanceData = filteredData.attendanceByBranch.find(a => a.branchId === branch.id);
-    if (!attendanceData) return null;
-
-    return (
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold">{branch.name}</h3>
-            <p className="text-sm text-muted-foreground">{branch.location}</p>
-          </div>
-          <Badge 
-            variant={attendanceData.rate >= 90 ? 'success' : attendanceData.rate >= 75 ? 'warning' : 'destructive'}
-            className="text-lg px-3 py-1"
-          >
-            {attendanceData.rate.toFixed(1)}%
-          </Badge>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-            <UserCheck className="h-6 w-6 text-green-600 mx-auto mb-1" />
-            <p className="text-2xl font-bold text-green-600">{attendanceData.present.toLocaleString()}</p>
-            <p className="text-xs text-green-600/80">Present</p>
-          </div>
-          <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-            <UserX className="h-6 w-6 text-red-600 mx-auto mb-1" />
-            <p className="text-2xl font-bold text-red-600">{attendanceData.absent.toLocaleString()}</p>
-            <p className="text-xs text-red-600/80">Absent</p>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Total Students:</span>
-            <span className="font-medium">{(attendanceData.present + attendanceData.absent).toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>Principal:</span>
-            <span className="font-medium">{branch.principal}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>Teachers:</span>
-            <span className="font-medium">{branch.teachers}</span>
-          </div>
-        </div>
-      </Card>
-    );
-  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6 min-h-full pb-8"
+      className="h-full flex flex-col min-h-0"
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Attendance Analytics</h1>
           <p className="text-muted-foreground">
@@ -221,258 +313,103 @@ const AttendanceOrgHead = () => {
           </p>
         </div>
         
-        <div className="flex items-center space-x-3">
-          {/* Show branch selector only if there are multiple branches */}
-          {data.branches.length > 1 && (
-            <BranchSelector
-              branches={data.branches}
-              selectedBranches={selectedBranches}
-              onSelectionChange={setSelectedBranches}
-              mode="multiple"
-              className="w-64"
-            />
-          )}
-          
-          <div className="flex rounded-lg border border-border">
-            <Button
-              variant={viewMode === 'overview' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('overview')}
-              className="rounded-r-none"
-            >
-              Overview
-            </Button>
-            <Button
-              variant={viewMode === 'trends' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('trends')}
-              className="rounded-none border-x-0"
-            >
-              Trends
-            </Button>
-            <Button
-              variant={viewMode === 'detailed' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('detailed')}
-              className="rounded-l-none"
-            >
-              Detailed
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Time Range Selector */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-muted-foreground" />
-            <span className="font-medium">Time Period:</span>
-          </div>
-          <div className="flex rounded-lg border border-border">
-            {[
-              { key: 'today', label: 'Today' },
-              { key: 'week', label: 'This Week' },
-              { key: 'month', label: 'This Month' },
-              { key: 'quarter', label: 'This Quarter' },
-            ].map((period) => (
-              <Button
-                key={period.key}
-                variant={timeRange === period.key ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTimeRange(period.key)}
-                className={cn(
-                  period.key === 'today' && "rounded-r-none",
-                  period.key === 'week' && "rounded-none border-x-0",
-                  period.key === 'month' && "rounded-none border-x-0",
-                  period.key === 'quarter' && "rounded-l-none"
-                )}
-              >
-                {period.label}
-              </Button>
-            ))}
-          </div>
-          <ExportDropdown
-            data={filteredData.attendanceByBranch}
-            filename="attendance-report"
-            title="Export Report"
-          />
-        </div>
-      </Card>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Overall Attendance"
-          value={`${filteredData.overallRate.toFixed(1)}%`}
-          icon={Users}
-          trend="up"
-          trendValue="+2.1% from last period"
-          color="blue"
-        />
-        <StatCard
-          title="Students Present"
-          value={filteredData.totalPresent.toLocaleString()}
-          icon={UserCheck}
-          trend="up"
-          trendValue="+5.2% from last period"
-          color="green"
-        />
-        <StatCard
-          title="Students Absent"
-          value={filteredData.totalAbsent.toLocaleString()}
-          icon={UserX}
-          trend="down"
-          trendValue="-3.1% from last period"
-          color="red"
-        />
-        <StatCard
-          title="Total Students"
-          value={filteredData.totalStudents.toLocaleString()}
-          icon={Clock}
-          trend="up"
-          trendValue="+1.8% from last period"
-          color="orange"
-        />
-      </div>
-
-      {viewMode === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AttendanceChart 
-            data={filteredData.attendanceByBranch}
-            title="Attendance by Branch"
-          />
-          
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Attendance Distribution</h3>
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="h-3 w-3 bg-green-500 rounded-full"></div>
-                  <span className="font-medium">Excellent (≥95%)</span>
-                </div>
-                <span className="font-bold">
-                  {filteredData.attendanceByBranch.filter(b => b.rate >= 95).length} branches
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="h-3 w-3 bg-yellow-500 rounded-full"></div>
-                  <span className="font-medium">Good (85-94%)</span>
-                </div>
-                <span className="font-bold">
-                  {filteredData.attendanceByBranch.filter(b => b.rate >= 85 && b.rate < 95).length} branches
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="h-3 w-3 bg-red-500 rounded-full"></div>
-                  <span className="font-medium">Needs Attention (&lt;85%)</span>
-                </div>
-                <span className="font-bold">
-                  {filteredData.attendanceByBranch.filter(b => b.rate < 85).length} branches
-                </span>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {viewMode === 'trends' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AttendanceChart 
-            data={filteredData.trends}
-            title="Attendance Trends Over Time"
-          />
-          
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Monthly Comparison</h3>
-              <TrendingUp className="h-5 w-5 text-muted-foreground" />
-            </div>
-            
-            <div className="space-y-3">
-              {filteredData.trends.map((trend, index) => {
-                const prevTrend = index > 0 ? filteredData.trends[index - 1] : null;
-                const change = prevTrend ? trend.rate - prevTrend.rate : 0;
-                
-                return (
-                  <div key={trend.month} className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50">
-                    <div className="flex items-center space-x-3">
-                      <span className="font-medium text-sm">{trend.month}</span>
-                      {change !== 0 && (
-                        <Badge variant={change > 0 ? 'success' : 'destructive'} className="text-xs">
-                          {change > 0 ? '+' : ''}{change.toFixed(1)}%
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="font-bold">{trend.rate}%</span>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {viewMode === 'detailed' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredData.branches.map((branch) => (
-            <BranchDetailCard key={branch.id} branch={branch} />
-          ))}
-        </div>
-      )}
-
-      {/* Action Items */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Action Items</h3>
-          <Badge variant="outline">{filteredData.attendanceByBranch.filter(b => b.rate < 85).length} requiring attention</Badge>
-        </div>
-        
-        <div className="space-y-3">
-          {filteredData.attendanceByBranch
-            .filter(branch => branch.rate < 90)
-            .sort((a, b) => a.rate - b.rate)
-            .map((branch) => (
-              <div key={branch.branchId} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className={cn(
-                    "h-3 w-3 rounded-full",
-                    branch.rate < 75 ? 'bg-red-500' : branch.rate < 85 ? 'bg-yellow-500' : 'bg-orange-500'
-                  )}></div>
-                  <div>
-                    <h4 className="font-medium">{branch.branchName}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Attendance: {branch.rate.toFixed(1)}% ({branch.absent} absent today)
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant={branch.rate < 75 ? 'destructive' : 'warning'}>
-                    {branch.rate < 75 ? 'Critical' : 'Monitor'}
-                  </Badge>
-                  <Button size="sm" variant="outline">
-                    Contact Principal
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-8">
+          {/* Time Period Selector */}
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div className="flex rounded-lg border border-border overflow-x-auto">
+                {[
+                  { key: 'today', label: 'Today' },
+                  { key: 'week', label: 'Week' },
+                  { key: 'month', label: 'Month' },
+                  { key: 'quarter', label: 'Quarter' },
+                  { key: 'custom', label: 'Custom' },
+                ].map((period) => (
+                  <Button
+                    key={period.key}
+                    variant={timeRange === period.key ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setTimeRange(period.key)}
+                    className={cn(
+                      "text-xs px-2 py-1 whitespace-nowrap",
+                      period.key === 'today' && "rounded-r-none",
+                      period.key === 'week' && "rounded-none border-x-0",
+                      period.key === 'month' && "rounded-none border-x-0",
+                      period.key === 'quarter' && "rounded-none border-x-0",
+                      period.key === 'custom' && "rounded-l-none"
+                    )}
+                  >
+                    {period.label}
                   </Button>
-                </div>
+                ))}
               </div>
-            ))}
-          
-          {filteredData.attendanceByBranch.filter(b => b.rate < 90).length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <UserCheck className="h-12 w-12 mx-auto mb-3 text-green-500" />
-              <p>All branches are maintaining excellent attendance rates!</p>
             </div>
-          )}
+            
+            {/* Custom Date Range Inputs */}
+            {timeRange === 'custom' && (
+              <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
+                <Input
+                  type="date"
+                  value={customDateRange.startDate}
+                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="w-32 sm:w-36 text-xs"
+                  placeholder="Start Date"
+                />
+                <span className="text-muted-foreground text-xs">to</span>
+                <Input
+                  type="date"
+                  value={customDateRange.endDate}
+                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="w-32 sm:w-36 text-xs"
+                  placeholder="End Date"
+                />
+              </div>
+            )}
+          </div>
+          
+          {/* Right side controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+            {/* Show branch selector only if there are multiple branches */}
+            {data.branches.length > 1 && (
+              <BranchSelector
+                branches={data.branches}
+                selectedBranches={selectedBranches}
+                onSelectionChange={setSelectedBranches}
+                mode="multiple"
+                className="w-full sm:w-64"
+              />
+            )}
+            
+            {/* Export Button */}
+            <ExportDropdown
+              data={filteredData.attendanceByBranch}
+              filename="attendance-report"
+              title="Export Report"
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto"
+            />
+          </div>
         </div>
-      </Card>
+      </div>
+
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hidden pb-6">
+        {/* Attendance Data Table */}
+        <DataTable
+          columns={attendanceColumns}
+          data={filteredData.attendanceByBranch}
+          searchable={true}
+          searchPlaceholder="Search branches..."
+          paginated={true}
+          defaultItemsPerPage={10}
+          showPaginationInfo={true}
+          showItemsPerPageSelector={true}
+          maxHeight="100%"
+          stickyHeader={true}
+        />
+      </div>
     </motion.div>
   );
 };
