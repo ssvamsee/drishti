@@ -349,7 +349,7 @@ const DataTable = ({
                       );
                     })}
                     {actions.length > 0 && (
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                      <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">
                         Actions
                       </th>
                     )}
@@ -376,7 +376,7 @@ const DataTable = ({
                       
                       {actions.length > 0 && (
                         <td className="py-3 px-4 text-sm">
-                          <div className="flex justify-end">
+                          <div className="flex justify-center">
                             <ActionDropdown actions={actions} item={item} />
                           </div>
                         </td>
