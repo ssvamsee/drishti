@@ -8,6 +8,7 @@ import useAuthStore from '../store/authStore';
 import { ROLE_NAMES } from '../utils/constants';
 import { getStudentAttendance } from '../utils/studentMockData';
 import { hasPermission, PERMISSIONS } from '../utils/permissions';
+import AttendanceOrgHead from './orghead/AttendanceOrgHead';
 
 const Attendance = () => {
   const { user } = useAuthStore();
@@ -23,6 +24,11 @@ const Attendance = () => {
       setLoading(false);
     }
   }, [user, selectedPeriod]);
+
+  // Role-based component rendering
+  if (user?.role === 'organization_head') {
+    return <AttendanceOrgHead />;
+  }
 
   const loadStudentAttendance = async () => {
     try {

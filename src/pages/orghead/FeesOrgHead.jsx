@@ -33,7 +33,13 @@ const FeesOrgHead = () => {
   useEffect(() => {
     // Simulate API call
     const fetchData = () => {
-      setData(ALL_ROLES_MOCK_DATA[USER_ROLES.ORGANIZATION_HEAD]);
+      const orgData = ALL_ROLES_MOCK_DATA[USER_ROLES.ORGANIZATION_HEAD];
+      setData(orgData);
+      
+      // Auto-select branch if organization has only one branch
+      if (orgData && orgData.branches.length === 1) {
+        setSelectedBranches([orgData.branches[0].id]);
+      }
     };
     
     fetchData();
@@ -292,23 +298,28 @@ const FeesOrgHead = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Financial Management</h1>
           <p className="text-muted-foreground">
-            {selectedBranches.length === 0 
-              ? `Track finances across all ${data.branches.length} branches`
-              : selectedBranches.length === 1
-                ? `Financial overview for ${data.branches.find(b => b.id === selectedBranches[0])?.name}`
-                : `Financial comparison for ${selectedBranches.length} selected branches`
+            {data.branches.length === 1 
+              ? `Financial management for ${data.branches[0].name}`
+              : selectedBranches.length === 0 
+                ? `Track finances across all ${data.branches.length} branches`
+                : selectedBranches.length === 1
+                  ? `Financial overview for ${data.branches.find(b => b.id === selectedBranches[0])?.name}`
+                  : `Financial comparison for ${selectedBranches.length} selected branches`
             }
           </p>
         </div>
         
         <div className="flex items-center space-x-3">
-          <BranchSelector
-            branches={data.branches}
-            selectedBranches={selectedBranches}
-            onSelectionChange={setSelectedBranches}
-            mode="multiple"
-            className="w-64"
-          />
+          {/* Show branch selector only if there are multiple branches */}
+          {data.branches.length > 1 && (
+            <BranchSelector
+              branches={data.branches}
+              selectedBranches={selectedBranches}
+              onSelectionChange={setSelectedBranches}
+              mode="multiple"
+              className="w-64"
+            />
+          )}
           
           <div className="flex rounded-lg border border-border">
             <Button

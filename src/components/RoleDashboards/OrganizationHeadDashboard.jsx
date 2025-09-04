@@ -24,14 +24,20 @@ import { ALL_ROLES_MOCK_DATA } from '../../utils/allRolesMockData';
 import { USER_ROLES } from '../../utils/constants';
 
 const OrganizationHeadDashboard = () => {
-  const [selectedBranches, setSelectedBranches] = useState(['branch_001']);
+  const [selectedBranches, setSelectedBranches] = useState([]);
   const [viewMode, setViewMode] = useState('overview'); // 'overview', 'comparison', 'individual'
   const [data, setData] = useState(null);
 
   useEffect(() => {
     // Simulate API call
     const fetchData = () => {
-      setData(ALL_ROLES_MOCK_DATA[USER_ROLES.ORGANIZATION_HEAD]);
+      const orgData = ALL_ROLES_MOCK_DATA[USER_ROLES.ORGANIZATION_HEAD];
+      setData(orgData);
+      
+      // Auto-select branch if organization has only one branch
+      if (orgData && orgData.branches.length === 1) {
+        setSelectedBranches([orgData.branches[0].id]);
+      }
     };
     
     fetchData();
@@ -160,42 +166,56 @@ const OrganizationHeadDashboard = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Organization Dashboard</h1>
           <p className="text-muted-foreground">
-            {filteredData.type === 'all' 
-              ? `Overview of all ${data.branches.length} branches`
-              : filteredData.type === 'individual'
-                ? `${filteredData.branches[0]?.name} Campus Overview`
-                : `Comparison of ${selectedBranches.length} selected branches`
+            {data.branches.length === 1 
+              ? `${data.branches[0].name} - Single Branch Overview`
+              : filteredData.type === 'all' 
+                ? `Overview of all ${data.branches.length} branches`
+                : filteredData.type === 'individual'
+                  ? `${filteredData.branches[0]?.name} Campus Overview`
+                  : `Comparison of ${selectedBranches.length} selected branches`
             }
           </p>
         </div>
         
         <div className="flex items-center space-x-3">
-          <BranchSelector
-            branches={data.branches}
-            selectedBranches={selectedBranches}
-            onSelectionChange={setSelectedBranches}
-            mode="multiple"
-            className="w-64"
-          />
+          {/* Show branch selector only if there are multiple branches */}
+          {data.branches.length > 1 && (
+            <BranchSelector
+              branches={data.branches}
+              selectedBranches={selectedBranches}
+              onSelectionChange={setSelectedBranches}
+              mode="multiple"
+              className="w-64"
+            />
+          )}
           
-          <div className="flex rounded-lg border border-border">
-            <Button
-              variant={viewMode === 'overview' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('overview')}
-              className="rounded-r-none"
-            >
-              Overview
-            </Button>
-            <Button
-              variant={viewMode === 'comparison' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('comparison')}
-              className="rounded-none border-x-0"
-            >
-              Comparison
-            </Button>
-          </div>
+          {/* Show comparison view only if there are multiple branches */}
+          {data.branches.length > 1 ? (
+            <div className="flex rounded-lg border border-border">
+              <Button
+                variant={viewMode === 'overview' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('overview')}
+                className="rounded-r-none"
+              >
+                Overview
+              </Button>
+              <Button
+                variant={viewMode === 'comparison' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('comparison')}
+                className="rounded-l-none"
+              >
+                Comparison
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <div className="px-3 py-1.5 bg-muted rounded-lg">
+                <span className="text-sm font-medium text-muted-foreground">Single Branch Mode</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

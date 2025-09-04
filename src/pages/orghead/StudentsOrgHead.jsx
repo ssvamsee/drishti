@@ -35,7 +35,13 @@ const StudentsOrgHead = () => {
   useEffect(() => {
     // Simulate API call
     const fetchData = () => {
-      setData(ALL_ROLES_MOCK_DATA[USER_ROLES.ORGANIZATION_HEAD]);
+      const orgData = ALL_ROLES_MOCK_DATA[USER_ROLES.ORGANIZATION_HEAD];
+      setData(orgData);
+      
+      // Auto-select branch if organization has only one branch
+      if (orgData && orgData.branches.length === 1) {
+        setSelectedBranches([orgData.branches[0].id]);
+      }
     };
     
     fetchData();
@@ -280,19 +286,21 @@ const StudentsOrgHead = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-6 h-full flex flex-col"
+        className="h-full flex flex-col min-h-0"
       >
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex-shrink-0 flex flex-col gap-4 sm:gap-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">Students Management</h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-1">
-              {selectedBranches.length === 0 
-                ? `View analytics and manage students across all ${data.branches.length} branches`
-                : selectedBranches.length === 1
-                  ? `Analytics and student data for ${data.branches.find(b => b.id === selectedBranches[0])?.name}`
-                  : `Analytics and student data for ${selectedBranches.length} selected branches`
+              {data.branches.length === 1 
+                ? `Student analytics and data for ${data.branches[0].name}`
+                : selectedBranches.length === 0 
+                  ? `View analytics and manage students across all ${data.branches.length} branches`
+                  : selectedBranches.length === 1
+                    ? `Analytics and student data for ${data.branches.find(b => b.id === selectedBranches[0])?.name}`
+                    : `Analytics and student data for ${selectedBranches.length} selected branches`
               }
             </p>
           </div>
@@ -301,13 +309,16 @@ const StudentsOrgHead = () => {
             {/* Show controls only in detailed view */}
             {viewMode === 'detailed' && (
               <>
-                <BranchSelector
-                  branches={data.branches}
-                  selectedBranches={selectedBranches}
-                  onSelectionChange={setSelectedBranches}
-                  mode="multiple"
-                  className="w-full sm:w-64"
-                />
+                {/* Show branch selector only if there are multiple branches */}
+                {data.branches.length > 1 && (
+                  <BranchSelector
+                    branches={data.branches}
+                    selectedBranches={selectedBranches}
+                    onSelectionChange={setSelectedBranches}
+                    mode="multiple"
+                    className="w-full sm:w-64"
+                  />
+                )}
                 
                 <div className="relative w-full sm:w-80">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -350,18 +361,20 @@ const StudentsOrgHead = () => {
       </div>
 
 
-      {/* Analytics Section - New Layout (Summary View) */}
-      {viewMode === 'summary' && (
-        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 flex-1 lg:h-[630px]">
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hidden">
+        {/* Analytics Section - New Layout (Summary View) */}
+        {viewMode === 'summary' && (
+          <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 pb-6">
         {/* Student Distribution by Branch - Responsive width and height */}
-        <Card className="p-4 sm:p-6 w-full xl:w-1/2 h-auto xl:h-full flex flex-col min-h-0">
+        <Card className="p-4 sm:p-6 w-full xl:w-1/2 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Students by Branch</h3>
             <Users className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="flex flex-col items-center h-full justify-center space-y-6">
             {/* Pie Chart */}
-            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 lg:w-80 lg:h-90 xl:w-96 xl:h-96 flex-shrink-0">
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 flex-shrink-0">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 {(() => {
                   const branches = selectedBranches.length > 0 
@@ -462,9 +475,9 @@ const StudentsOrgHead = () => {
         </Card>
 
         {/* Right side - Performance and Attendance stacked vertically */}
-        <div className="w-full lg:w-1/2 flex flex-col gap-6 h-full">
+        <div className="w-full xl:w-1/2 flex flex-col gap-6">
           {/* Performance Analytics */}
-          <Card className="p-4 lg:p-6 flex-1 flex flex-col min-h-0">
+          <Card className="p-4 lg:p-6 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Performance by Branch</h3>
             <TrendingUp className="h-5 w-5 text-muted-foreground" />
@@ -526,7 +539,7 @@ const StudentsOrgHead = () => {
           </Card>
 
           {/* Attendance Analytics */}
-          <Card className="p-4 lg:p-6 flex-1 flex flex-col min-h-0">
+          <Card className="p-4 lg:p-6 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Attendance by Branch</h3>
             <Calendar className="h-5 w-5 text-muted-foreground" />
@@ -601,25 +614,26 @@ const StudentsOrgHead = () => {
           </div>
           </Card>
         </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Students Data Table (Detailed View) */}
-      {viewMode === 'detailed' && (
-        <div className="flex-1 min-h-0">
-          <DataTable
-            columns={columns}
-            data={filteredStudents}
-            searchable={false}
-            paginated={true}
-            defaultItemsPerPage={10}
-            showPaginationInfo={true}
-            showItemsPerPageSelector={true}
-            maxHeight="calc(100vh - 200px)"
-            stickyHeader={true}
-          />
-        </div>
-      )}
+        {/* Students Data Table (Detailed View) */}
+        {viewMode === 'detailed' && (
+          <div className="pb-6">
+            <DataTable
+              columns={columns}
+              data={filteredStudents}
+              searchable={false}
+              paginated={true}
+              defaultItemsPerPage={10}
+              showPaginationInfo={true}
+              showItemsPerPageSelector={true}
+              maxHeight="100%"
+              stickyHeader={true}
+            />
+          </div>
+        )}
+      </div>
       </motion.div>
     </>
   );

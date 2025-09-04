@@ -3,8 +3,18 @@ import { motion } from 'framer-motion';
 import { Users, Plus } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import useAuthStore from '../store/authStore';
+import StudentsOrgHead from './orghead/StudentsOrgHead';
 
 const Students = () => {
+  const { user } = useAuthStore();
+
+  // Role-based component rendering
+  if (user?.role === 'organization_head') {
+    return <StudentsOrgHead />;
+  }
+
+  // Default/placeholder for other roles (to be implemented)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

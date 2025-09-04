@@ -331,12 +331,12 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col h-full min-h-0">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0"
+        className="flex-shrink-0 flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 mb-6"
       >
         <div>
           <h1 className="text-3xl font-bold text-foreground">
@@ -358,8 +358,11 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* Role-specific Dashboard Content */}
-      {renderRoleSpecificDashboard()}
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto min-h-0 pb-6 scrollbar-hidden">
+        {/* Role-specific Dashboard Content */}
+        {renderRoleSpecificDashboard()}
+      </div>
     </div>
   );
 };

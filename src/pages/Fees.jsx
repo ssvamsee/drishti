@@ -8,6 +8,7 @@ import useAuthStore from '../store/authStore';
 import { ROLE_NAMES } from '../utils/constants';
 import { getStudentFees } from '../utils/studentMockData';
 import { hasPermission, PERMISSIONS } from '../utils/permissions';
+import FeesOrgHead from './orghead/FeesOrgHead';
 
 const Fees = () => {
   const { user } = useAuthStore();
@@ -22,6 +23,11 @@ const Fees = () => {
       setLoading(false);
     }
   }, [user]);
+
+  // Role-based component rendering
+  if (user?.role === 'organization_head') {
+    return <FeesOrgHead />;
+  }
 
   const loadStudentFees = async () => {
     try {
