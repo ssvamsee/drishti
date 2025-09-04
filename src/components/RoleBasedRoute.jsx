@@ -4,9 +4,7 @@ import useAuthStore from '../store/authStore';
 // Import organization head specific pages
 import StudentsOrgHead from '../pages/orghead/StudentsOrgHead';
 import AttendanceOrgHead from '../pages/orghead/AttendanceOrgHead';
-import MarksOrgHead from '../pages/orghead/MarksOrgHead';
-import FeesOrgHead from '../pages/orghead/FeesOrgHead';
-import ClassesOrgHead from '../pages/orghead/ClassesOrgHead';
+import BranchesOrgHead from '../pages/orghead/BranchesOrgHead';
 
 // Import default pages
 import Students from '../pages/Students';
@@ -24,12 +22,8 @@ const RoleBasedRoute = ({ page, children }) => {
         return <StudentsOrgHead />;
       case 'attendance':
         return <AttendanceOrgHead />;
-      case 'marks':
-        return <MarksOrgHead />;
-      case 'fees':
-        return <FeesOrgHead />;
-      case 'classes':
-        return <ClassesOrgHead />;
+      case 'branches':
+        return <BranchesOrgHead />;
       default:
         return children;
     }

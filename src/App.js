@@ -38,6 +38,7 @@ import Analytics from './pages/superadmin/Analytics';
 // Components
 import LoadingSpinner from './components/LoadingSpinner';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleBasedRoute from './components/RoleBasedRoute';
 
 function App() {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -80,7 +81,20 @@ function App() {
                 path="students" 
                 element={
                   <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher']}>
-                    <Students />
+                    <RoleBasedRoute page="students">
+                      <Students />
+                    </RoleBasedRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="branches" 
+                element={
+                  <ProtectedRoute roles={['superadmin', 'organization_head', 'central_office_operator', 'dean']}>
+                    <RoleBasedRoute page="branches">
+                      <div>Branches Page (Generic)</div>
+                    </RoleBasedRoute>
                   </ProtectedRoute>
                 } 
               />
@@ -89,7 +103,9 @@ function App() {
                 path="attendance" 
                 element={
                   <ProtectedRoute roles={['organization_head', 'central_office_operator', 'dean', 'branch_principal', 'branch_computer_operator', 'teacher', 'student', 'parent']}>
-                    <Attendance />
+                    <RoleBasedRoute page="attendance">
+                      <Attendance />
+                    </RoleBasedRoute>
                   </ProtectedRoute>
                 } 
               />

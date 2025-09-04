@@ -97,6 +97,17 @@ export const AVAILABLE_FEATURES = {
     components: ['StudentDashboard', 'StudentProfile'],
   },
   
+  BRANCH_MANAGEMENT: {
+    id: 'BRANCH_MANAGEMENT',
+    name: 'Branch Management',
+    description: 'Manage organization branches, locations, and branch administration',
+    category: 'Administrative',
+    icon: 'MapPin',
+    permissions: ['VIEW_BRANCHES', 'MANAGE_BRANCHES'],
+    routes: ['/branches'],
+    components: ['BranchManagement', 'BranchDashboard'],
+  },
+  
   ATTENDANCE_MANAGEMENT: {
     id: 'ATTENDANCE_MANAGEMENT',
     name: 'Attendance Management',
@@ -393,6 +404,7 @@ export const ORGANIZATION_FEATURES = {
     package: 'PREMIUM',
     enabledFeatures: [
       'STUDENT_MANAGEMENT',
+      'BRANCH_MANAGEMENT',
       'ATTENDANCE_MANAGEMENT',
       'MARKS_GRADES_MANAGEMENT',
       'ASSIGNMENT_MANAGEMENT',

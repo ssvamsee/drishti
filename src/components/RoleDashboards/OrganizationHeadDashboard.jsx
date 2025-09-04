@@ -373,10 +373,10 @@ const OrganizationHeadDashboard = () => {
                     <div className="flex items-center space-x-2">
                       <div className="h-6 w-6 bg-primary/10 rounded-full flex items-center justify-center">
                         <span className="text-xs font-medium text-primary">
-                          {branch.principal.split(' ').map(n => n[0]).join('')}
+                          {branch.principal ? branch.principal.split(' ').map(n => n[0]).join('') : 'NA'}
                         </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">{branch.principal}</span>
+                      <span className="text-xs text-muted-foreground">{branch.principal || 'Not Assigned'}</span>
                     </div>
                   </div>
                 </Card>
