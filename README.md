@@ -103,6 +103,81 @@ A comprehensive, multi-tenant Student ERP system built with modern React, featur
 3. **Open Application**
    Visit `http://localhost:3000`
 
+## 🌐 Deployment
+
+### **GitHub Pages Deployment**
+
+This project is configured for automatic deployment to GitHub Pages.
+
+#### **Manual Deployment**
+```bash
+npm run deploy
+```
+
+#### **Automatic Deployment**
+The app automatically deploys to GitHub Pages when you push to the main/master branch using GitHub Actions.
+
+**Live Demo**: [https://dhrushti.siddamvamsee.in](https://dhrushti.siddamvamsee.in)
+**Fallback URL**: [https://ssvamsee.github.io/drishti](https://ssvamsee.github.io/drishti)
+
+#### **Setup GitHub Pages with Custom Domain**
+
+##### **1. GitHub Repository Setup**
+1. Go to your repository settings
+2. Navigate to "Pages" section
+3. Set source to "GitHub Actions"
+4. In the "Custom domain" field, enter: `dhrushti.siddamvamsee.in`
+5. Enable "Enforce HTTPS" (after DNS propagation)
+
+##### **2. DNS Configuration**
+Configure the following DNS records with your domain provider:
+
+**For Subdomain (dhrushti.siddamvamsee.in):**
+```
+Type: CNAME
+Name: dhrushti
+Value: ssvamsee.github.io
+TTL: 300 (or default)
+```
+
+**Alternative: If you want to use the apex domain (siddamvamsee.in):**
+```
+Type: A
+Name: @ (or blank)
+Value: 185.199.108.153
+TTL: 300
+
+Type: A  
+Name: @ (or blank)
+Value: 185.199.109.153
+TTL: 300
+
+Type: A
+Name: @ (or blank) 
+Value: 185.199.110.153
+TTL: 300
+
+Type: A
+Name: @ (or blank)
+Value: 185.199.111.153
+TTL: 300
+```
+
+##### **3. DNS Verification**
+After setting up DNS records, verify the configuration:
+```bash
+# Check CNAME record
+nslookup dhrushti.siddamvamsee.in
+
+# Check if it resolves to GitHub Pages
+dig dhrushti.siddamvamsee.in CNAME
+```
+
+##### **4. SSL Certificate**
+- GitHub Pages will automatically provision an SSL certificate
+- This may take 10-15 minutes after DNS propagation
+- Enable "Enforce HTTPS" in repository settings once available
+
 ### Demo Login Credentials
 ```
 Email: principal@school.edu
