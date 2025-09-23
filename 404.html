@@ -4,21 +4,22 @@
     <meta charset="utf-8">
     <title>Dhrushti</title>
     <script type="text/javascript">
-      // Single Page Apps for GitHub Pages
-      // MIT License
-      // https://github.com/rafgraph/spa-github-pages
-      var pathSegmentsToKeep = 1;
-
-      var l = window.location;
-      l.replace(
-        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-        l.hash
-      );
+      // Simple redirect to index.html for SPA routing
+      var currentPath = window.location.pathname;
+      var currentSearch = window.location.search;
+      var currentHash = window.location.hash;
+      
+      // Only redirect if it's not already the root
+      if (currentPath !== '/' && currentPath !== '/index.html') {
+        // Redirect to root with the path as a hash
+        window.location.replace('/' + currentHash);
+      }
     </script>
   </head>
   <body>
+    <div style="text-align: center; padding: 50px;">
+      <h1>Redirecting...</h1>
+      <p>If you are not redirected automatically, <a href="/">click here</a>.</p>
+    </div>
   </body>
 </html>
