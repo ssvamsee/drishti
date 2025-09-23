@@ -1,8 +1,8 @@
 {
+  "homepage": "https://dhrushti.siddamvamsee.in",
   "name": "dhrushti",
   "version": "1.0.0",
   "description": "A comprehensive Dhrushti system built with React and modern UI",
-  "homepage": "https://dhrushti.siddamvamsee.in",
   "private": true,
   "dependencies": {
     "@heroicons/react": "^2.0.16",
