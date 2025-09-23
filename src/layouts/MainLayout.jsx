@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Menu, 
@@ -22,7 +22,8 @@ import { toast } from 'sonner';
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const { user, logout } = useAuthStore();
+  const { user, logout, isAuthenticated } = useAuthStore();
+  
   const dropdownRef = useRef(null);
 
   // Handle click outside dropdown
@@ -53,6 +54,11 @@ const MainLayout = () => {
     // Use React Router navigation instead of window.location
     window.location.replace('/login');
   };
+
+  // Additional authentication guard for the layout
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="h-screen flex overflow-hidden bg-background">

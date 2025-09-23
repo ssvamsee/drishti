@@ -75,8 +75,15 @@ function App() {
 
             {/* Protected Dashboard Routes - Nested under ProtectedDashboardRoute */}
             <Route path="/" element={<MainLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
+              <Route index element={<Navigate to="/login" replace />} />
+              <Route 
+                path="dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="students" 
                 element={
